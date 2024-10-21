@@ -50,7 +50,7 @@ def update_student_information(student_id: str, student: Student):
 
         if result.modified_count == 0:
             raise HTTPException(status_code=404, detail="Student not found or no changes made")
-        
+
         return {"modified_count": result.modified_count}
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))

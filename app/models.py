@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from bson import ObjectId
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import Field
 
 import bcrypt
@@ -8,6 +8,7 @@ import bcrypt
 class User(BaseModel):
     id: str | None = None
     name: str
+    role: Literal["professor", "administrator", "student"]
     email: str
     password: str | None = None
     status: Optional[str] = Field(default="active")
@@ -37,3 +38,14 @@ class Student(User):
 
 class Admin(User):
     pass
+
+class Auth(BaseModel):
+    email: str
+    password: str
+
+    def hash_password(self):
+        return bcrypt.hashpw(self.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    def __init__(self, **kargs):
+        super().__init__(**kargs)
+        self.password = self.hash_password()
