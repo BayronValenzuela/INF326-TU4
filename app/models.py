@@ -45,12 +45,3 @@ class Admin(User):
 class Auth(BaseModel):
     email: str
     password: str
-
-    def hash_password(self):
-        return bcrypt.hashpw(self.password.encode("utf-8"), bcrypt.gensalt()).decode(
-            "utf-8"
-        )
-
-    def __init__(self, **kargs):
-        super().__init__(**kargs)
-        self.password = self.hash_password()

@@ -66,14 +66,19 @@ def authentication(user: Auth):
             )
 
         # Generar el JWT
-        expires_delta = timedelta(minutes=30)
+        expires_delta = timedelta(minutes=10)
         expire = datetime.utcnow() + expires_delta
         to_encode = data.copy()
         to_encode.update({"exp": expire})
 
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        decode = jwt.decode(encoded_jwt, SECRET_KEY, algorithms=ALGORITHM)
 
-        return {"access_token": encoded_jwt, "token_type": "bearer"}
+        return {
+            "access_token": encoded_jwt,
+            "decoded": decode,
+            "token_type": "bearer",
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Something went wrong: {str(e)}")
