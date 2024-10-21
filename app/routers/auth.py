@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, status
 from jose import jwt
 from pymongo import MongoClient
 
+import logging
 from app.models import Admin, Auth, ChangePassword, Professor, Student
 
 router = APIRouter()
@@ -20,13 +21,19 @@ ALGORITHM = "HS256"
 @router.post("/api/v1/auth/login")
 ## ojito arreglar
 def authentication(user: Auth):
+    logging.info("testeando logs!")
     try:
         # Buscamos al usuario en las diferentes colecciones
+        logging.info("request a student")
         response_student = user_service_db.students.find_one({"email": user.email})
+        logging.info("request a admin")
+        logging.info("probando si usuario es admin")
         response_admin = user_service_db.admins.find_one({"email": user.email})
+        logging.info("request a Professor")
         response_professor = user_service_db.professors.find_one({"email": user.email})
 
         data = None
+        logging.info("probando si usuario es student")
         if response_student is not None:
             user_student_dict = Student(**response_student)
             if bcrypt.checkpw(
@@ -39,6 +46,7 @@ def authentication(user: Auth):
                 }
 
         elif response_admin is not None:
+            logging.info("probando si usuario es admin")
             user_admin_dict = Admin(**response_admin)
             if bcrypt.checkpw(
                 user.password.encode("utf-8"), user_admin_dict.password.encode("utf-8")
@@ -49,6 +57,7 @@ def authentication(user: Auth):
                 }
 
         elif response_professor is not None:
+            logging.info("probando si usuario es Professor")
             user_professor_dict = Professor(**response_professor)
             if bcrypt.checkpw(
                 user.password.encode("utf-8"),
@@ -66,12 +75,16 @@ def authentication(user: Auth):
             )
 
         # Generar el JWT
+        logging.info("generando JWT")
         expires_delta = timedelta(minutes=10)
         expire = datetime.utcnow() + expires_delta
         to_encode = data.copy()
+        logging.info("update de JWT")
         to_encode.update({"exp": expire})
 
+        logging.info("encoding de JWT")
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        logging.info("decoding de JWT")
         decode = jwt.decode(encoded_jwt, SECRET_KEY, algorithms=ALGORITHM)
 
         return {

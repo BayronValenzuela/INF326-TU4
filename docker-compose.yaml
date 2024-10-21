@@ -1,12 +1,4 @@
 services:
-  user_service:
-    build: .
-    ports:
-      - "5000:80"
-    volumes:
-      - .:/code
-    links:
-      - user_service_mongodb
 
   user_service_mongodb:
     image: mongo:5.0
@@ -14,6 +6,17 @@ services:
       - user_service_mongodb_container:/data/db
     logging:
       driver: none
+
+  user_service:
+    build: .
+    depends_on:
+      - user_service_mongodb
+    ports:
+      - "5000:80"
+    volumes:
+      - .:/code
+    links:
+      - user_service_mongodb
 
 volumes:
   user_service_mongodb_container:

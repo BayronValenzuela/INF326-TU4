@@ -11,7 +11,7 @@ user_service_db = mongodb_client.user_service
 @router.get("/")
 def list_all_professors():
     try:
-        professors = user_service_db.professors.find()
+        professors = user_service_db.professors.find({"status":"active"})
         return [Professor(**professor) for professor in professors]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -19,10 +19,14 @@ def list_all_professors():
 @router.post("/")
 def register_new_professor(professor: Professor):
     try:
-        professor.hash_password()
-        professor_dict = professor.dict()
-        result = user_service_db.professors.insert_one(professor_dict)
-        return {"inserted_id": str(result.inserted_id)}
+        res_email = user_service_db.professors.find_one({"email": professor.email})
+        if res_email is None:
+            professor.hash_password()
+            professor_dict = professor.dict()
+            result = user_service_db.professors.insert_one(professor_dict)
+            return {"inserted_id": str(result.inserted_id)}
+        else:
+            raise Exception("email already registered.")
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
@@ -32,10 +36,11 @@ def register_new_professor(professor: Professor):
 def get_professor_information(professor_id: str):
     try:
         professor_dict = user_service_db.professors.find_one(
-            {"_id": ObjectId(professor_id)},
-            {"password": 0}  # Exclude the password field
+            {"_id": ObjectId(professor_id),"status":"active"},
+            {"password": 0},  # Exclude the password field
         )
         if professor_dict is None:
+            raise Exception("Professor not found")
             raise HTTPException(status_code=404, detail="Professor not found")
         return Professor(**professor_dict)
     except Exception as e:
