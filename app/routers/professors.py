@@ -2,6 +2,9 @@ from fastapi import APIRouter, HTTPException
 from pymongo import MongoClient
 from bson import ObjectId
 from app.models import Professor
+from app.rabbitmq_consumer import run_consumer
+from app.rabbitmq_event import send_message_to_rabbitmq
+
 
 router = APIRouter()
 
@@ -22,6 +25,12 @@ def register_new_professor(professor: Professor):
         professor.hash_password()
         professor_dict = professor.dict()
         result = user_service_db.professors.insert_one(professor_dict)
+
+        message = f"Professor {str(result.inserted_id)} created"
+        send_message_to_rabbitmq(f"professor.{str(result.inserted_id)}.created", message)
+
+        run_consumer(f"professor.{str(result.inserted_id)}.created")
+
         return {"inserted_id": str(result.inserted_id)}
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
@@ -51,6 +60,11 @@ def update_professor_information(professor_id: str, professor: Professor):
         if result.modified_count == 0:
             raise HTTPException(status_code=404, detail="Professor not found or no changes made")
         
+        message = f"Professor {str(professor_id)} updated"
+        send_message_to_rabbitmq(f"professor.{str(professor_id)}.updated", message)
+
+        run_consumer(f"professor.{str(professor_id)}.updated")
+
         return {"modified_count": result.modified_count}
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
@@ -62,6 +76,12 @@ def delete_professor(professor_id: str):
     try:
         # Using soft delete instead of hard delete, so we just update the status field
         result = user_service_db.professors.update_one({"_id": ObjectId(professor_id)}, {"$set": {"status": "inactive"}})
+        
+        message = f"Professor {str(professor_id)} deleted"
+        send_message_to_rabbitmq(f"professor.{str(professor_id)}.deleted", message)
+
+        run_consumer(f"professor.{str(professor_id)}.deleted")
+        
         return {"deleted": result.acknowledged}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
