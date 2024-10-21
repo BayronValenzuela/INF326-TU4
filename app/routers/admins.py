@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException
 from pymongo import MongoClient
 from bson import ObjectId
 from app.models import Admin
+from app.rabbitmq_consumer import run_consumer
+from app.rabbitmq_event import send_message_to_rabbitmq
 
 router = APIRouter()
 
@@ -21,7 +23,13 @@ def register_new_admin(admin: Admin):
     try:
         admin.hash_password()
         admin_dict = admin.dict()
-        result = user_service_db.admin.insert_one(admin_dict)
+        result = user_service_db.admins.insert_one(admin_dict)
+
+        message = f"Administrative {str(result.inserted_id)} created"
+        send_message_to_rabbitmq(f"administrative.{str(result.inserted_id)}.created", message)
+
+        run_consumer(f"administrative.{str(result.inserted_id)}.created")
+        
         return {"inserted_id": str(result.inserted_id)}
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
@@ -51,6 +59,11 @@ def update_admin_information(admin_id: str, admin: Admin):
         if result.modified_count == 0:
             raise HTTPException(status_code=404, detail="Admin not found or no changes made")
         
+        message = f"Administrative {str(admin_id)} updated"
+        send_message_to_rabbitmq(f"administrative.{str(admin_id)}.updated", message)
+
+        run_consumer(f"administrative.{str(admin_id)}.updated")
+        
         return {"modified_count": result.modified_count}
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
@@ -62,6 +75,12 @@ def delete_admin(admin_id: str):
     try:
         # Using soft delete instead of hard delete, so we just update the status field
         result = user_service_db.admins.update_one({"_id": ObjectId(admin_id)}, {"$set": {"status": "inactive"}})
+        
+        message = f"Administrative {str(admin_id)} deleted"
+        send_message_to_rabbitmq(f"administrative.{str(admin_id)}.deleted", message)
+
+        run_consumer(f"administrative.{str(admin_id)}.deleted")
+        
         return {"deleted": result.acknowledged}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
