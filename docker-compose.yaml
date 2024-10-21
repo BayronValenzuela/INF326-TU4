@@ -13,9 +13,9 @@ services:
     volumes:
       - user_service_mongodb_container:/data/db
     logging:
-      driver: none
+      driver: 'json-file'
   
-  rabbitmq:
+  user_service_rabbitmq:
     image: rabbitmq:3-management
     ports:
       - "5672:5672"
@@ -23,19 +23,6 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: password
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  event_consumer:
-    build: .
-    command: python /code/app/event_consumer.py
-    volumes:
-      - .:/code
-    depends_on:
-     - rabbitmq 
 
 volumes:
   user_service_mongodb_container:
