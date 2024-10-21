@@ -23,7 +23,7 @@ def register_new_admin(admin: Admin):
     try:
         admin.hash_password()
         admin_dict = admin.dict()
-        result = user_service_db.admin.insert_one(admin_dict)
+        result = user_service_db.admins.insert_one(admin_dict)
 
         message = f"Administrative {str(result.inserted_id)} created"
         send_message_to_rabbitmq(f"administrative.{str(result.inserted_id)}.created", message)

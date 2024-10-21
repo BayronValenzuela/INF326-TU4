@@ -23,7 +23,7 @@ def register_new_student(student: Student):
     try:
         student.hash_password()
         student_dict = student.dict()
-        result = user_service_db.student.insert_one(student_dict)
+        result = user_service_db.students.insert_one(student_dict)
 
         message = f"Student {str(result.inserted_id)} created"
         send_message_to_rabbitmq(f"student.{str(result.inserted_id)}.created", message)
