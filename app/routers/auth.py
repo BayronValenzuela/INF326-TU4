@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, status
 from jose import jwt
 from pymongo import MongoClient
 
-from app.models import Admin, Auth, Professor, Student
+from app.models import Admin, Auth, ChangePassword, Professor, Student
 
 router = APIRouter()
 
@@ -103,9 +103,51 @@ def recover():
 
 
 @router.post("/api/v1/auth/change-password")
-def change_password():
+def change_password(change_data: ChangePassword):
     try:
-        students = user_service_db.students.find()
-        return [Student(**student) for student in students]
+        user_student = user_service_db.students.find_one({"email": change_data.email})
+        user_admin = user_service_db.admins.find_one({"email": change_data.email})
+        user_professor = user_service_db.professors.find_one(
+            {"email": change_data.email}
+        )
+
+        user_data = None
+        collection = None
+
+        if user_student:
+            user_data = Student(**user_student)
+            collection = user_service_db.students
+        elif user_admin:
+            user_data = Admin(**user_admin)
+            collection = user_service_db.admins
+        elif user_professor:
+            user_data = Professor(**user_professor)
+            collection = user_service_db.professors
+
+        if user_data is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado!"
+            )
+
+        # Verificar si la password antigua coincide
+        if not bcrypt.checkpw(
+            change_data.old_password.encode("utf-8"), user_data.password.encode("utf-8")
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Password antigua no coincide.",
+            )
+
+        # Hashear la nueva password
+        new_hashed_password = bcrypt.hashpw(
+            change_data.new_password.encode("utf-8"), bcrypt.gensalt()
+        ).decode("utf-8")
+
+        # Actualizar la password en la base de datos
+        collection.update_one(
+            {"email": user_data.email}, {"$set": {"password": new_hashed_password}}
+        )
+
+        return {"message": "Password updated successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

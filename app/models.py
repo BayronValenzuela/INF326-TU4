@@ -45,3 +45,9 @@ class Admin(User):
 class Auth(BaseModel):
     email: str
     password: str
+
+
+class ChangePassword(BaseModel):
+    email: str
+    old_password: str
+    new_password: str
