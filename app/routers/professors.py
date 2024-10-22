@@ -49,7 +49,6 @@ def get_professor_information(professor_id: str):
             {"password": 0},  # Exclude the password field
         )
         if professor_dict is None:
-            raise Exception("Professor not found")
             raise HTTPException(status_code=404, detail="Professor not found")
         return Professor(**professor_dict)
     except Exception as e:
