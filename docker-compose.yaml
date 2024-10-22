@@ -6,7 +6,7 @@ services:
       - user_service_mongodb_container:/data/db
     logging:
       driver: 'json-file'
-  
+
   user_service_rabbitmq:
     image: rabbitmq:3-management
     ports:
@@ -26,6 +26,7 @@ services:
       - .:/code
     links:
       - user_service_mongodb
+    env_file: ".env"
 
 volumes:
   user_service_mongodb_container:

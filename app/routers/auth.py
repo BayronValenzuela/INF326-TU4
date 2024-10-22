@@ -4,6 +4,10 @@ import bcrypt
 from fastapi import APIRouter, HTTPException, status
 from jose import jwt
 from pymongo import MongoClient
+from dotenv import load_dotenv
+from pathlib import Path
+import os
+from os.path import join, dirname
 
 import logging
 from app.models import Admin, Auth, ChangePassword, Professor, Student
@@ -13,23 +17,19 @@ router = APIRouter()
 mongodb_client = MongoClient("user_service_mongodb", 27017)
 user_service_db = mongodb_client.user_service
 
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 
-SECRET_KEY = "Some_Secret_Key"
-ALGORITHM = "HS256"
+SECRET_KEY = os.environ.get("SECRET_KEY")
+ALGORITHM = os.environ.get("ALGORITHM")
 
 
-@router.post("/api/v1/auth/login")
-## ojito arreglar
+@router.post("/login")
 def authentication(user: Auth):
-    logging.info("testeando logs!")
     try:
         # Buscamos al usuario en las diferentes colecciones
-        logging.info("request a student")
         response_student = user_service_db.students.find_one({"email": user.email})
-        logging.info("request a admin")
-        logging.info("probando si usuario es admin")
         response_admin = user_service_db.admins.find_one({"email": user.email})
-        logging.info("request a Professor")
         response_professor = user_service_db.professors.find_one({"email": user.email})
 
         data = None
@@ -97,7 +97,7 @@ def authentication(user: Auth):
         raise HTTPException(status_code=500, detail=f"Something went wrong: {str(e)}")
 
 
-@router.post("/api/v1/auth/authorize")
+@router.post("/authorize")
 def authorize():
     try:
         students = user_service_db.students.find()
@@ -106,7 +106,7 @@ def authorize():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/v1/auth/recover")
+@router.post("/recover")
 def recover():
     try:
         students = user_service_db.students.find()
@@ -115,7 +115,7 @@ def recover():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/v1/auth/change-password")
+@router.post("/change-password")
 def change_password(change_data: ChangePassword):
     try:
         user_student = user_service_db.students.find_one({"email": change_data.email})
