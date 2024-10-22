@@ -1,12 +1,4 @@
 services:
-  user_service:
-    build: .
-    ports:
-      - "5000:80"
-    volumes:
-      - .:/code
-    links:
-      - user_service_mongodb
 
   user_service_mongodb:
     image: mongo:5.0
@@ -14,7 +6,7 @@ services:
       - user_service_mongodb_container:/data/db
     logging:
       driver: 'json-file'
-  
+
   user_service_rabbitmq:
     image: rabbitmq:3-management
     ports:
@@ -23,6 +15,18 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: password
+
+  user_service:
+    build: .
+    depends_on:
+      - user_service_mongodb
+    ports:
+      - "5000:80"
+    volumes:
+      - .:/code
+    links:
+      - user_service_mongodb
+    env_file: ".env"
 
 volumes:
   user_service_mongodb_container:
