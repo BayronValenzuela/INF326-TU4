@@ -5,7 +5,16 @@ services:
     volumes:
       - user_service_mongodb_container:/data/db
     logging:
-      driver: none
+      driver: 'json-file'
+  
+  user_service_rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
 
   user_service:
     build: .
