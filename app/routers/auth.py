@@ -1,13 +1,15 @@
 from datetime import datetime, timedelta
 import bcrypt
-from fastapi import APIRouter, HTTPException, status
-from jose import jwt
+from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi.security import OAuth2PasswordBearer
+from jose import jwt, JWTError
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from pathlib import Path
 import os
 import logging
 from app.models import Admin, Auth, ChangePassword, Professor, Student
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -21,6 +23,32 @@ load_dotenv(dotenv_path=env_path)
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = os.environ.get("ALGORITHM")
+TOKEN_EXPIRATION_MINUTES = 30
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+# Datos de prueba para este ejemplo
+ALLOWED_ROLES = ["admin", "professor", "student"]
+
+class RoleCheckRequest(BaseModel):
+    role: str  # El rol que quieres verificar
+
+# Función para extraer y verificar el token JWT
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("email")
+        role = payload.get("role")
+        if email is None or role is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permisos para acceder a este recurso",
+            )
+        return {"email": email, "role": role}
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Token inválido o expirado",
+        )
 
 @router.post("/login")
 def authentication(user: Auth):
@@ -74,74 +102,136 @@ def authentication(user: Auth):
         return {"access_token": encoded_jwt, "decoded": decode, "token_type": "bearer"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Something went wrong: {str(e)}")
+    
+# Simulación de autenticación de usuario usando JWT
+def get_current_user(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        role = payload.get("role")
+        if role is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No se pudo obtener el rol")
+        return {"role": role}
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido o expirado")
+    
+    
 
 @router.post("/authorize")
-def authorize():
+def authorize(role_check: RoleCheckRequest, current_user: dict = Depends(get_current_user)):
     """
-    Endpoint para autorizar usuarios y listar estudiantes registrados.
+    Endpoint para determinar si un usuario está autorizado de acceder a un recurso.
 
     Retorna:
-    - Lista de estudiantes registrados.
+    - Comprobación de si el usuario está habilitado o no para acceder al recurso.
     """
-    try:
-        students = user_service_db.students.find()
-        return [Student(**student) for student in students]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    if current_user["role"] == role_check.role:
+        return {"message": f"El usuario con rol {current_user['role']} está habilitado para este recurso."}
+    
+    return {"message": f"El usuario con rol {current_user['role']} NO está habilitado para este recurso."}
 
 @router.post("/recover")
-def recover():
+def recover_password(email: str):
     """
     Endpoint para la recuperación de cuentas de estudiantes.
 
+    Parámetro:
+    - email: correo del usuario del cual se busca recuperar la contraseña.
+
     Retorna:
-    - Lista de estudiantes registrados.
+    - token que permite ser utilizado para realizar el cambio de contraseña.
     """
     try:
-        students = user_service_db.students.find()
-        return [Student(**student) for student in students]
+        # Definir las colecciones a buscar
+        collections = [
+            {"collection": user_service_db.students, "model": Student},
+            {"collection": user_service_db.admins, "model": Admin},
+            {"collection": user_service_db.professors, "model": Professor},
+        ]
+        
+        user_data = None
+
+        # Buscar el usuario por email en las colecciones
+        for entry in collections:
+            user_record = entry["collection"].find_one({"email": email})
+            if user_record:
+                user_data = entry["model"](**user_record)
+                break
+
+        if not user_data:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+
+        # Generar un token de recuperación
+        expire = datetime.utcnow() + timedelta(minutes=TOKEN_EXPIRATION_MINUTES)
+        recovery_data = {
+            "email": email,
+            "exp": expire,
+            "action": "recover_password"
+        }
+        recovery_token = jwt.encode(recovery_data, SECRET_KEY, algorithm=ALGORITHM)
+
+        return {
+            "message": "Se ha enviado un enlace para la recuperación de la contraseña.",
+            "recovery_token": recovery_token
+        }
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error al recuperar la contraseña: {str(e)}")
 
 @router.post("/change-password")
-def change_password(change_data: ChangePassword):
+def change_password(token: str, new_password: str):
     """
     Endpoint para cambiar la contraseña de un usuario.
 
     Parámetros:
-    - change_data: Objeto que contiene el email, contraseña antigua y nueva.
+    - token: token de usuario actual.
+    - new_password: nueva contrasña a la cual se desea cambiar.
 
     Retorna:
-    - Un mensaje confirmando que la contraseña fue actualizada.
+    - Un mensaje confirmando que la contraseña fue actualizada o en caso de error, se informa el motivo.
     """
     try:
-        user_student = user_service_db.students.find_one({"email": change_data.email})
-        user_admin = user_service_db.admins.find_one({"email": change_data.email})
-        user_professor = user_service_db.professors.find_one({"email": change_data.email})
+        # Decodificar y verificar el token de recuperación
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("email")
+        action = payload.get("action")
+        exp = payload.get("exp")
 
+        if email is None or action != "recover_password":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token inválido o acción no permitida")
+        
+        # Verificar si el token ha expirado
+        if datetime.utcnow() > datetime.utcfromtimestamp(exp):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El token ha expirado")
+
+        # Buscar el usuario por email en las colecciones
+        collections = [
+            {"collection": user_service_db.students, "model": Student},
+            {"collection": user_service_db.admins, "model": Admin},
+            {"collection": user_service_db.professors, "model": Professor},
+        ]
+        
         user_data = None
         collection = None
 
-        if user_student:
-            user_data = Student(**user_student)
-            collection = user_service_db.students
-        elif user_admin:
-            user_data = Admin(**user_admin)
-            collection = user_service_db.admins
-        elif user_professor:
-            user_data = Professor(**user_professor)
-            collection = user_service_db.professors
+        for entry in collections:
+            user_record = entry["collection"].find_one({"email": email})
+            if user_record:
+                user_data = entry["model"](**user_record)
+                collection = entry["collection"]
+                break
 
-        if user_data is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado!")
+        if not user_data:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
 
-        if not bcrypt.checkpw(change_data.old_password.encode("utf-8"), user_data.password.encode("utf-8")):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Password antigua no coincide.")
+        # Hashear la nueva contraseña
+        new_hashed_password = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
-        new_hashed_password = bcrypt.hashpw(change_data.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        # Actualizar la contraseña en la base de datos
+        collection.update_one({"email": email}, {"$set": {"password": new_hashed_password}})
 
-        collection.update_one({"email": user_data.email}, {"$set": {"password": new_hashed_password}})
+        return {"message": "Contraseña actualizada con éxito"}
 
-        return {"message": "Password updated successfully"}
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token inválido")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error al cambiar la contraseña: {str(e)}")
