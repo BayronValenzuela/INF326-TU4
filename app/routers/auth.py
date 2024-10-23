@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-
 import bcrypt
 from fastapi import APIRouter, HTTPException, status
 from jose import jwt
@@ -7,122 +6,118 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 from pathlib import Path
 import os
-from os.path import join, dirname
-
 import logging
 from app.models import Admin, Auth, ChangePassword, Professor, Student
 
 router = APIRouter()
 
+# Conexión a MongoDB
 mongodb_client = MongoClient("user_service_mongodb", 27017)
 user_service_db = mongodb_client.user_service
 
+# Cargar variables de entorno
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = os.environ.get("ALGORITHM")
 
-
 @router.post("/login")
 def authentication(user: Auth):
+    """
+    Endpoint para autenticar a un usuario basado en email y contraseña.
+
+    Parámetros:
+    - **email**: El email del usuario que se desea autenticar.
+    - **password**: La contraseña del usuario en texto plano.
+
+    Retorna:
+    - **access_token:** El token JWT generado para autenticación.
+    - **decoded:** Los datos del token decodificado.
+        - **email:** El email del usuario autenticado.
+        - **role:** El rol del usuario autenticado.
+        - **exp:** La fecha de expiración del token.
+    - **token_type:** Tipo de token ('bearer').
+    """
     try:
-        # Buscamos al usuario en las diferentes colecciones
+        # Buscar usuario en las colecciones
         response_student = user_service_db.students.find_one({"email": user.email})
         response_admin = user_service_db.admins.find_one({"email": user.email})
         response_professor = user_service_db.professors.find_one({"email": user.email})
 
         data = None
-        logging.info("probando si usuario es student")
-        if response_student is not None:
+
+        if response_student:
             user_student_dict = Student(**response_student)
-            if bcrypt.checkpw(
-                user.password.encode("utf-8"),
-                user_student_dict.password.encode("utf-8"),
-            ):
-                data = {
-                    "email": user_student_dict.email,
-                    "role": user_student_dict.role,
-                }
-
-        elif response_admin is not None:
-            logging.info("probando si usuario es admin")
+            if bcrypt.checkpw(user.password.encode("utf-8"), user_student_dict.password.encode("utf-8")):
+                data = {"email": user_student_dict.email, "role": user_student_dict.role}
+        elif response_admin:
             user_admin_dict = Admin(**response_admin)
-            if bcrypt.checkpw(
-                user.password.encode("utf-8"), user_admin_dict.password.encode("utf-8")
-            ):
-                data = {
-                    "email": user_admin_dict.email,
-                    "role": user_admin_dict.role,
-                }
-
-        elif response_professor is not None:
-            logging.info("probando si usuario es Professor")
+            if bcrypt.checkpw(user.password.encode("utf-8"), user_admin_dict.password.encode("utf-8")):
+                data = {"email": user_admin_dict.email, "role": user_admin_dict.role}
+        elif response_professor:
             user_professor_dict = Professor(**response_professor)
-            if bcrypt.checkpw(
-                user.password.encode("utf-8"),
-                user_professor_dict.password.encode("utf-8"),
-            ):
-                data = {
-                    "email": user_professor_dict.email,
-                    "role": user_professor_dict.role,
-                }
+            if bcrypt.checkpw(user.password.encode("utf-8"), user_professor_dict.password.encode("utf-8")):
+                data = {"email": user_professor_dict.email, "role": user_professor_dict.role}
 
         if data is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password",
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
 
-        # Generar el JWT
-        logging.info("generando JWT")
         expires_delta = timedelta(minutes=10)
         expire = datetime.utcnow() + expires_delta
         to_encode = data.copy()
-        logging.info("update de JWT")
         to_encode.update({"exp": expire})
 
-        logging.info("encoding de JWT")
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        logging.info("decoding de JWT")
         decode = jwt.decode(encoded_jwt, SECRET_KEY, algorithms=ALGORITHM)
 
-        return {
-            "access_token": encoded_jwt,
-            "decoded": decode,
-            "token_type": "bearer",
-        }
-
+        return {"access_token": encoded_jwt, "decoded": decode, "token_type": "bearer"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Something went wrong: {str(e)}")
 
-
 @router.post("/authorize")
 def authorize():
+    """
+    Endpoint para autorizar usuarios y listar estudiantes registrados.
+
+    Retorna:
+    - Lista de estudiantes registrados.
+    """
     try:
         students = user_service_db.students.find()
         return [Student(**student) for student in students]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.post("/recover")
 def recover():
+    """
+    Endpoint para la recuperación de cuentas de estudiantes.
+
+    Retorna:
+    - Lista de estudiantes registrados.
+    """
     try:
         students = user_service_db.students.find()
         return [Student(**student) for student in students]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post("/change-password")
 def change_password(change_data: ChangePassword):
+    """
+    Endpoint para cambiar la contraseña de un usuario.
+
+    Parámetros:
+    - change_data: Objeto que contiene el email, contraseña antigua y nueva.
+
+    Retorna:
+    - Un mensaje confirmando que la contraseña fue actualizada.
+    """
     try:
         user_student = user_service_db.students.find_one({"email": change_data.email})
         user_admin = user_service_db.admins.find_one({"email": change_data.email})
-        user_professor = user_service_db.professors.find_one(
-            {"email": change_data.email}
-        )
+        user_professor = user_service_db.professors.find_one({"email": change_data.email})
 
         user_data = None
         collection = None
@@ -138,28 +133,14 @@ def change_password(change_data: ChangePassword):
             collection = user_service_db.professors
 
         if user_data is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado!"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado!")
 
-        # Verificar si la password antigua coincide
-        if not bcrypt.checkpw(
-            change_data.old_password.encode("utf-8"), user_data.password.encode("utf-8")
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Password antigua no coincide.",
-            )
+        if not bcrypt.checkpw(change_data.old_password.encode("utf-8"), user_data.password.encode("utf-8")):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Password antigua no coincide.")
 
-        # Hashear la nueva password
-        new_hashed_password = bcrypt.hashpw(
-            change_data.new_password.encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8")
+        new_hashed_password = bcrypt.hashpw(change_data.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
-        # Actualizar la password en la base de datos
-        collection.update_one(
-            {"email": user_data.email}, {"$set": {"password": new_hashed_password}}
-        )
+        collection.update_one({"email": user_data.email}, {"$set": {"password": new_hashed_password}})
 
         return {"message": "Password updated successfully"}
     except Exception as e:
