@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <name>-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: <name>-app
+  template:
+    metadata:
+      labels:
+        app: <name>-app
+    spec:
+      containers:
+      - name: fastapi-container
+        image: ttl.sh/ncerpa-inf326-demo-app:8h
+        ports:
+        - containerPort: 8000
+      envFrom:
+        - secretRef:
+          name: <name>-secrets
