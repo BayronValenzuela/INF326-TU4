@@ -1,11 +1,16 @@
 services:
 
   user_service_mongodb:
-    image: mongo:5.0
+    image: mongo:6.0.3
     volumes:
       - user_service_mongodb_container:/data/db
     logging:
       driver: 'json-file'
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=user
+      - MONGO_INITDB_ROOT_PASSWORD=pass
+    ports:
+      - "27017:27017"
 
   user_service_rabbitmq:
     image: rabbitmq:3-management
@@ -18,6 +23,10 @@ services:
 
   user_service:
     build: .
+    environment:
+      - MONGO_HOST=mongo
+      - MONGO_PASSWORD=pass
+      - MONGO_USER=user
     depends_on:
       - user_service_mongodb
     ports:
