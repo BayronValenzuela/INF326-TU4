@@ -28,12 +28,12 @@ spec:
     spec:
       containers:
       - name: fastapi-container
-        image: ttl.sh/ncerpa-inf326-demo-app:8h
+        image: ttl.sh/ncerpa-inf326-demo-app-users:8h
         ports:
         - containerPort: 8000
         envFrom:
           - secretRef:
-            name: users-secrets
+              name: users-secrets
 
 ---
 
