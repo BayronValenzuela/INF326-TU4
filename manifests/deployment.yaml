@@ -31,9 +31,9 @@ spec:
         image: ttl.sh/ncerpa-inf326-demo-app:8h
         ports:
         - containerPort: 8000
-      envFrom:
-        - secretRef:
-          name: users-secrets
+        envFrom:
+          - secretRef:
+            name: users-secrets
 
 ---
 
