@@ -1,0 +1,46 @@
+.header{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px 3%;
+    background: rgb(51, 62, 106);
+    display: flex;
+    justify-content: space-between;
+    z-index: 100;
+}
+
+.logo{
+    
+    top: 30; /* Esquina superior */
+    left: 10px; /* Cambia a `left: 0` para esquina superior izquierda */
+    width: 300px; /* Ajusta el tamaño de la imagen */
+    height: auto; /* Mantén la proporción de la imagen */
+    background-color: transparent; /* Asegura que el fondo del contenedor sea transparente */
+    display: block; /* Asegura que la imagen respete el diseño */
+    
+}
+
+.navbar a{
+    position: relative;
+    font-size: 18px;
+    color: #fff;
+    font-weight: 500;
+    margin-left: 40px;
+}
+
+
+.navbar button{
+    width: 70%;
+    height: 40px;
+    background: #fff;
+    border: none;
+    outline: none;
+    border-radius: 40px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    font-size: 16px;
+    color: #333;
+    font-weight: 700;
+    margin-left: 40px;
+}
