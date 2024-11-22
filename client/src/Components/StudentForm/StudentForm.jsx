@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './StudentForm.css';
 
 const StudentForm = () => {
   const [name, setName] = useState('');
@@ -9,7 +10,6 @@ const StudentForm = () => {
   const [message, setMessage] = useState('');
   const [students, setStudents] = useState([]);
 
-  // Listar estudiantes
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -23,7 +23,6 @@ const StudentForm = () => {
     fetchStudents();
   }, []);
 
-  // Registrar un nuevo estudiante
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -34,58 +33,60 @@ const StudentForm = () => {
         status,
       });
       setMessage('Estudiante creado exitosamente.');
-      setStudents([...students, response.data]);  // Agregar el nuevo estudiante a la lista
+      setStudents([...students, response.data]);
     } catch (error) {
       setMessage('Error al crear el estudiante.');
     }
   };
 
-  // Eliminar un estudiante
   const handleDelete = async (studentId) => {
     try {
       await axios.delete(`/api/v1/students/${studentId}`);
       setMessage('Estudiante eliminado exitosamente.');
-      setStudents(students.filter(student => student._id !== studentId));  // Eliminar de la lista local
+      setStudents(students.filter((student) => student._id !== studentId));
     } catch (error) {
       setMessage('Error al eliminar el estudiante.');
     }
   };
 
   return (
-    <div>
+    <div className="wrapper">
       <h2>Formulario de Estudiante</h2>
       <form onSubmit={handleSubmit}>
-        <div>
+        <div className="input-box">
           <label>Nombre</label>
-          <input 
-            type="text" 
-            value={name} 
-            onChange={(e) => setName(e.target.value)} 
-            required 
+          <input
+            type="text"
+            placeholder="Ingresa el nombre"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
           />
         </div>
-        <div>
+        <div className="input-box">
           <label>Email</label>
-          <input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
+          <input
+            type="email"
+            placeholder="Ingresa el email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
           />
         </div>
-        <div>
+        <div className="input-box">
           <label>Carrera</label>
-          <input 
-            type="text" 
-            value={major} 
-            onChange={(e) => setMajor(e.target.value)} 
-            required 
+          <input
+            type="text"
+            placeholder="Ingresa la carrera"
+            value={major}
+            onChange={(e) => setMajor(e.target.value)}
+            required
           />
         </div>
-        <div>
+        <div className="input-box">
           <label>Estado</label>
-          <select 
-            value={status} 
+          <select
+            value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
             <option value="active">Activo</option>
@@ -94,11 +95,11 @@ const StudentForm = () => {
         </div>
         <button type="submit">Crear Estudiante</button>
       </form>
-      {message && <p>{message}</p>}
+      {message && <p className="message">{message}</p>}
 
       <h3>Estudiantes Activos</h3>
       <ul>
-        {students.map(student => (
+        {students.map((student) => (
           <li key={student._id}>
             {student.name} - {student.email} - {student.major} - {student.status}
             <button onClick={() => handleDelete(student._id)}>Eliminar</button>

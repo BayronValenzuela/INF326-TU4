@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './AdminForm.css';
 
 const AdminForm = () => {
   const [name, setName] = useState('');
@@ -49,31 +50,31 @@ const AdminForm = () => {
   };
 
   return (
-    <div>
+    <div className='wrapper'>
       <h2>Formulario de Administrador</h2>
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>Nombre</label>
+        <div className='input-box'>
           <input 
             type="text" 
+            placeholder='Nombre'
             value={name} 
             onChange={(e) => setName(e.target.value)} 
             required 
           />
         </div>
-        <div>
-          <label>Email</label>
+        <div className='input-box'>
           <input 
             type="email" 
+            placeholder='Email'
             value={email} 
             onChange={(e) => setEmail(e.target.value)} 
             required 
           />
         </div>
-        <div>
-          <label>Rol</label>
+        <div className='input-box'>
           <input 
             type="text" 
+            placeholder='Rol'
             value={role} 
             onChange={(e) => setRole(e.target.value)} 
             required 
@@ -81,7 +82,7 @@ const AdminForm = () => {
         </div>
         <button type="submit">Crear Administrador</button>
       </form>
-      {message && <p>{message}</p>}
+      {message && <p className='message'>{message}</p>}
       
       <h3>Administradores Activos</h3>
       <ul>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './ProfessorForm.css';
 
 const ProfessorForm = () => {
   const [name, setName] = useState('');
@@ -52,58 +53,62 @@ const ProfessorForm = () => {
   };
 
   return (
-    <div>
-      <h2>Formulario de Profesor</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Nombre</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Rol</label>
-          <input
-            type="text"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Departamento</label>
-          <input
-            type="text"
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit">Crear Profesor</button>
-      </form>
-      {message && <p>{message}</p>}
+    <div className='main-content'>
+      <div className="wrapper">
+        <h1>Formulario de Profesor</h1>
+        <form onSubmit={handleSubmit}>
+          <div className="input-box">
+            <input
+              type="text"
+              placeholder="Nombre"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="input-box">
+            <input
+              type="text"
+              placeholder="Rol"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              required
+            />
+          </div>
+          <div className="input-box">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="input-box">
+            <input
+              type="text"
+              placeholder="Departamento"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit">Crear Profesor</button>
+        </form>
+        {message && <p className="message">{message}</p>}
 
-      <h3>Profesores Activos</h3>
-      <ul>
-        {professors.map((professor) => (
-          <li key={professor._id}>
-            {professor.name} - {professor.email} - {professor.role} - {professor.department}
-            <button onClick={() => handleDelete(professor._id)}>Eliminar</button>
-          </li>
-        ))}
-      </ul>
+        <h3>Profesores Activos</h3>
+        <ul>
+          {professors.map((professor) => (
+            <li key={professor._id} className="professor-item">
+              {professor.name} - {professor.email} - {professor.role} - {professor.department}
+              <button className="delete-btn" onClick={() => handleDelete(professor._id)}>
+                Eliminar
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
