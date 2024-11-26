@@ -14,7 +14,7 @@ const ProfessorForm = () => {
   useEffect(() => {
     const fetchProfessors = async () => {
       try {
-        const response = await axios.get('/api/v1/professors');
+        const response = await axios.get('http://user_service:80/api/v1/professors');
         setProfessors(response.data);
       } catch (error) {
         setMessage('Error al cargar los profesores.');
