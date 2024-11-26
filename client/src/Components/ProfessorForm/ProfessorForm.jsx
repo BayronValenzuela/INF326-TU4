@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './ProfessorForm.css';
 
+// Configuración de la URL base desde una variable de entorno
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const ProfessorForm = () => {
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
@@ -14,9 +17,10 @@ const ProfessorForm = () => {
   useEffect(() => {
     const fetchProfessors = async () => {
       try {
-        const response = await axios.get('http://user_service:80/api/v1/professors');
+        const response = await axios.get(`${API_URL}/api/v1/professors`); // URL actualizada
         setProfessors(response.data);
       } catch (error) {
+        console.error('Error fetching professors:', error);
         setMessage('Error al cargar los profesores.');
       }
     };
@@ -28,7 +32,7 @@ const ProfessorForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/v1/professors', {
+      const response = await axios.post(`${API_URL}/api/v1/professors`, {
         name,
         role,
         email,
@@ -36,7 +40,12 @@ const ProfessorForm = () => {
       });
       setMessage('Profesor creado exitosamente.');
       setProfessors([...professors, response.data]); // Agregar el nuevo profesor a la lista
+      setName('');
+      setRole('');
+      setEmail('');
+      setDepartment('');
     } catch (error) {
+      console.error('Error creating professor:', error);
       setMessage('Error al crear el profesor.');
     }
   };
@@ -44,16 +53,17 @@ const ProfessorForm = () => {
   // Eliminar un profesor
   const handleDelete = async (professorId) => {
     try {
-      await axios.delete(`/api/v1/professors/${professorId}`);
+      await axios.delete(`${API_URL}/api/v1/professors/${professorId}`);
       setMessage('Profesor eliminado exitosamente.');
-      setProfessors(professors.filter(professor => professor._id !== professorId)); // Eliminar de la lista local
+      setProfessors(professors.filter((professor) => professor._id !== professorId)); // Eliminar de la lista local
     } catch (error) {
+      console.error('Error deleting professor:', error);
       setMessage('Error al eliminar el profesor.');
     }
   };
 
   return (
-    <div className='main-content'>
+    <div className="main-content">
       <div className="wrapper">
         <h1>Formulario de Profesor</h1>
         <form onSubmit={handleSubmit}>
