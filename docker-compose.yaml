@@ -1,9 +1,9 @@
 services:
 
-  user_service_mongodb:
+  users-mongo-service:
     image: mongo:6.0.3
     volumes:
-      - user_service_mongodb_container:/data/db
+      - users-mongo-service_container:/data/db
     logging:
       driver: 'json-file'
     environment:
@@ -27,15 +27,17 @@ services:
       - MONGO_HOST=mongo
       - MONGO_PASSWORD=pass
       - MONGO_USER=user
+    image: users-img
+    container-name: users-app
     depends_on:
-      - user_service_mongodb
+      - users-mongo-service
     ports:
       - "5000:80"
     volumes:
       - .:/code
     links:
-      - user_service_mongodb
+      - users-mongo-service
     env_file: ".env"
 
 volumes:
-  user_service_mongodb_container:
+  users-mongo-service_container:

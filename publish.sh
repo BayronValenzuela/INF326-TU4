@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME="ncerpa-inf326-demo-app-users"
+IMAGE_NAME="users-img"
 IMAGE_TAG="8h"
 
 # Build the Docker image

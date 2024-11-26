@@ -8,7 +8,7 @@ from app.rabbitmq_event import send_message_to_rabbitmq
 router = APIRouter()
 
 # Conexión a la base de datos MongoDB
-mongodb_client = MongoClient("user_service_mongodb", 27017)
+mongodb_client = MongoClient("users-mongo-service", 27017)
 user_service_db = mongodb_client.user_service
 
 @router.get("/")
