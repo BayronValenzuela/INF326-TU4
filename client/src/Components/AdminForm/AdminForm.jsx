@@ -9,7 +9,9 @@ const AdminForm = () => {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('');
   const [message, setMessage] = useState('');
+  const [password, setPassword] = useState('');
   const [admins, setAdmins] = useState([]);
+
 
   // Listar administradores
   useEffect(() => {
@@ -29,10 +31,12 @@ const AdminForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/v1/admins', {
+      const response = await axios.post(`${API_URL}/api/v1/admins`, {
         name,
+        role: 'administrator',
         email,
-        role,
+        password,
+        status: 'active',
       });
       setMessage('Administrador creado exitosamente.');
     } catch (error) {
@@ -42,10 +46,16 @@ const AdminForm = () => {
 
   // Eliminar un administrador
   const handleDelete = async (adminId) => {
+    console.log('Admin ID:', adminId);
+    if (!adminId) {
+      setMessage('Error: Admin ID is undefined.');
+      return;
+    }
+
     try {
-      await axios.delete(`/api/v1/admins/${adminId}`);
+      await axios.delete(`${API_URL}/api/v1/admins/${adminId}`);
       setMessage('Administrador eliminado exitosamente.');
-      setAdmins(admins.filter(admin => admin._id !== adminId)); // Eliminar de la lista local
+      setAdmins(admins.filter(admin => admin.id !== adminId)); // Eliminar de la lista local
     } catch (error) {
       setMessage('Error al eliminar el administrador.');
     }
@@ -75,10 +85,10 @@ const AdminForm = () => {
         </div>
         <div className='input-box'>
           <input
-            type="text"
-            placeholder='Rol'
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
+            type="password"
+            placeholder='password'
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
@@ -89,9 +99,9 @@ const AdminForm = () => {
       <h3>Administradores Activos</h3>
       <ul>
         {admins.map(admin => (
-          <li key={admin._id}>
+          <li key={admin.id}>
             {admin.name} - {admin.email} - {admin.role}
-            <button onClick={() => handleDelete(admin._id)}>Eliminar</button>
+            <button onClick={() => handleDelete(admin.id)}>Eliminar</button>
           </li>
         ))}
       </ul>

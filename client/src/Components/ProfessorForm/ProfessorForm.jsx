@@ -21,6 +21,7 @@ const ProfessorForm = () => {
     const fetchProfessors = async () => {
       try {
         const response = await axios.get(`${API_URL}/api/v1/professors`); // URL actualizada
+        console.log('profe:', response.data);
         setProfessors(response.data);
       } catch (error) {
         console.error('Error fetching professors:', error);
@@ -38,10 +39,10 @@ const ProfessorForm = () => {
       const response = await axios.post(`${API_URL}/api/v1/professors`, {
         id,
         name,
-        role,
+        role: "professor",
         email,
         password,
-        status,
+        status: "active",
         department,
       });
       setMessage('Profesor creado exitosamente.');
@@ -84,15 +85,6 @@ const ProfessorForm = () => {
           </div>
           <div className="input-box">
             <input
-              type="text"
-              placeholder="Rol"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              required
-            />
-          </div>
-          <div className="input-box">
-            <input
               type="email"
               placeholder="Email"
               value={email}
@@ -125,9 +117,9 @@ const ProfessorForm = () => {
         <h3>Profesores Activos</h3>
         <ul>
           {professors.map((professor) => (
-            <li key={professor._id} className="professor-item">
+            <li key={professor.id} className="professor-item">
               {professor.name} - {professor.email} - {professor.role} - {professor.department}
-              <button className="delete-btn" onClick={() => handleDelete(professor._id)}>
+              <button className="delete-btn" onClick={() => handleDelete(professor.id)}>
                 Eliminar
               </button>
             </li>

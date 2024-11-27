@@ -11,6 +11,7 @@ const StudentForm = () => {
   const [status, setStatus] = useState('active');
   const [message, setMessage] = useState('');
   const [students, setStudents] = useState([]);
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -28,11 +29,13 @@ const StudentForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/v1/students', {
+      const response = await axios.post(`${API_URL}/api/v1/students`, {
         name,
+        role: 'student',
         email,
+        password,
+        status: 'active',
         major,
-        status,
       });
       setMessage('Estudiante creado exitosamente.');
       setStudents([...students, response.data]);
@@ -43,9 +46,9 @@ const StudentForm = () => {
 
   const handleDelete = async (studentId) => {
     try {
-      await axios.delete(`/api/v1/students/${studentId}`);
+      await axios.delete(`${API_URL}/api/v1/students/${studentId}`);
       setMessage('Estudiante eliminado exitosamente.');
-      setStudents(students.filter((student) => student._id !== studentId));
+      setStudents(students.filter((student) => student.id !== studentId));
     } catch (error) {
       setMessage('Error al eliminar el estudiante.');
     }
@@ -76,6 +79,16 @@ const StudentForm = () => {
           />
         </div>
         <div className="input-box">
+          <label>Password</label>
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div className="input-box">
           <label>Carrera</label>
           <input
             type="text"
@@ -85,16 +98,6 @@ const StudentForm = () => {
             required
           />
         </div>
-        <div className="input-box">
-          <label>Estado</label>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="active">Activo</option>
-            <option value="inactive">Inactivo</option>
-          </select>
-        </div>
         <button type="submit">Crear Estudiante</button>
       </form>
       {message && <p className="message">{message}</p>}
@@ -102,9 +105,9 @@ const StudentForm = () => {
       <h3>Estudiantes Activos</h3>
       <ul>
         {students.map((student) => (
-          <li key={student._id}>
+          <li key={student.id}>
             {student.name} - {student.email} - {student.major} - {student.status}
-            <button onClick={() => handleDelete(student._id)}>Eliminar</button>
+            <button onClick={() => handleDelete(student.id)}>Eliminar</button>
           </li>
         ))}
       </ul>
