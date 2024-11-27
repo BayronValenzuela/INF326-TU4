@@ -29,7 +29,7 @@ const StudentForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${API_URL}/api/v1/students`, {
+      await axios.post(`${API_URL}/api/v1/students`, {
         name,
         role: 'student',
         email,
@@ -38,7 +38,8 @@ const StudentForm = () => {
         major,
       });
       setMessage('Estudiante creado exitosamente.');
-      setStudents([...students, response.data]);
+      const response = await axios.get(`${API_URL}/api/v1/students`);
+      setStudents(response.data);
     } catch (error) {
       setMessage('Error al crear el estudiante.');
     }

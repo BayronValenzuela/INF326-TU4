@@ -31,7 +31,7 @@ const AdminForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${API_URL}/api/v1/admins`, {
+      await axios.post(`${API_URL}/api/v1/admins`, {
         name,
         role: 'administrator',
         email,
@@ -39,6 +39,8 @@ const AdminForm = () => {
         status: 'active',
       });
       setMessage('Administrador creado exitosamente.');
+      const response = await axios.get(`${API_URL}/api/v1/admins`);
+      setAdmins(response.data);
     } catch (error) {
       setMessage('Error al crear el administrador.');
     }

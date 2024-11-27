@@ -36,7 +36,8 @@ const ProfessorForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${API_URL}/api/v1/professors`, {
+      //const response = await axios.post(`${API_URL}/api/v1/professors`, {
+      await axios.post(`${API_URL}/api/v1/professors`, {
         id,
         name,
         role: "professor",
@@ -46,11 +47,13 @@ const ProfessorForm = () => {
         department,
       });
       setMessage('Profesor creado exitosamente.');
-      setProfessors([...professors, response.data]); // Agregar el nuevo profesor a la lista
+      //setProfessors([...professors, response.data]); // Agregar el nuevo profesor a la lista
       setName('');
       setRole('');
       setEmail('');
       setDepartment('');
+      const response = await axios.get(`${API_URL}/api/v1/professors`);
+      setProfessors(response.data);
     } catch (error) {
       console.error('Error creating professor:', error);
       setMessage('Error al crear el profesor.');
