@@ -20,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],  # Permitir todos los encabezados
 )
 
-mongodb_client = MongoClient("user_service_mongodb", 27017)
+mongodb_client = MongoClient("users-mongo-service", 27017)
 user_service_db = mongodb_client.user_service
 
 app.include_router(professors.router, prefix="/api/v1/professors", tags=["Professors"])
