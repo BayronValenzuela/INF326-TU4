@@ -6,9 +6,6 @@ services:
       - user_service_mongodb_container:/data/db
     logging:
       driver: 'json-file'
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=user
-      - MONGO_INITDB_ROOT_PASSWORD=pass
     ports:
       - "27017:27017"
 
@@ -23,10 +20,6 @@ services:
 
   user_service:
     build: .
-    environment:
-      - MONGO_HOST=mongo
-      - MONGO_PASSWORD=pass
-      - MONGO_USER=user
     depends_on:
       - user_service_mongodb
     ports:
@@ -46,7 +39,7 @@ services:
     depends_on:
       - user_service
     environment:
-      - REACT_APP_API_URL=http://user_service:5000
+      - REACT_APP_API_URL=http://localhost:5000
     volumes:
       - ./client:/app
     command: ["npm", "start"]

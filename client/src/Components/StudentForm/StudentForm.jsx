@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './StudentForm.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const StudentForm = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -13,7 +15,7 @@ const StudentForm = () => {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const response = await axios.get('/api/v1/students');
+        const response = await axios.get(`${API_URL}/api/v1/students`);
         setStudents(response.data);
       } catch (error) {
         setMessage('Error al cargar los estudiantes.');

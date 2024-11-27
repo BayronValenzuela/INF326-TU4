@@ -11,6 +11,9 @@ const ProfessorForm = () => {
   const [email, setEmail] = useState('');
   const [department, setDepartment] = useState('');
   const [message, setMessage] = useState('');
+  const [password, setPassword] = useState('pwd');
+  const [status, setStatus] = useState('active');
+  const [id, setId] = useState(Math.floor(Math.random() * 100000))
   const [professors, setProfessors] = useState([]);
 
   // Listar profesores
@@ -33,9 +36,12 @@ const ProfessorForm = () => {
     e.preventDefault();
     try {
       const response = await axios.post(`${API_URL}/api/v1/professors`, {
+        id,
         name,
         role,
         email,
+        password,
+        status,
         department,
       });
       setMessage('Profesor creado exitosamente.');
@@ -55,7 +61,7 @@ const ProfessorForm = () => {
     try {
       await axios.delete(`${API_URL}/api/v1/professors/${professorId}`);
       setMessage('Profesor eliminado exitosamente.');
-      setProfessors(professors.filter((professor) => professor._id !== professorId)); // Eliminar de la lista local
+      setProfessors(professors.filter((professor) => professor.id !== professorId)); // Eliminar de la lista local
     } catch (error) {
       console.error('Error deleting professor:', error);
       setMessage('Error al eliminar el profesor.');
@@ -91,6 +97,15 @@ const ProfessorForm = () => {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="input-box">
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
