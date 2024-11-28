@@ -17,6 +17,13 @@ spec:
           pathType: Prefix
           backend:
             service:
+              name: frontend-users-service
+              port:
+                number: 80
+        - path: /api
+          pathType: Prefix
+          backend:
+            service:
               name: users-service
               port:
                 number: 80

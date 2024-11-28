@@ -12,6 +12,8 @@ kubectl delete -f manifests/service.yaml --kubeconfig "$KUBECONFIG"
 kubectl delete -f manifests/loadbalancer.yaml --kubeconfig "$KUBECONFIG"
 kubectl delete -f manifests/hpa.yaml --kubeconfig "$KUBECONFIG"
 kubectl delete -f manifests/ingress.yaml --kubeconfig "$KUBECONFIG"
+kubectl delete -f manifests/frontend-deployment.yaml --kubeconfig "$KUBECONFIG"
+kubectl delete -f manifests/frontend-service.yaml --kubeconfig "$KUBECONFIG"
 
 # Verificar si hubo errores
 if [[ $? -ne 0 ]]; then

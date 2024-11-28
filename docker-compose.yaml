@@ -32,7 +32,6 @@ services:
   user_service:
     build: .
     image: users-img
-    container-name: users-app
     depends_on:
       - users-mongo-service
     ports:
@@ -52,6 +51,7 @@ services:
     build:
       context: ./client
       dockerfile: dockerfile
+    image: frontend:latest
     ports:
       - "3000:3000"
     depends_on:
