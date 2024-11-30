@@ -2,22 +2,30 @@
 
 KUBECONFIG=/mnt/c/Users/mazip/Downloads/k8s-inf326-kubeconfig.yaml
 
-kubectl apply -f manifests/statefulset.yaml --kubeconfig "$KUBECONFIG"
-kubectl apply -f manifests/volume.yaml --kubeconfig "$KUBECONFIG"
-kubectl apply -f manifests/rabbitmq.yaml --kubeconfig "$KUBECONFIG"
-kubectl apply -f manifests/secret.yaml --kubeconfig "$KUBECONFIG"
-kubectl apply -f manifests/deployment.yaml --kubeconfig "$KUBECONFIG"
-kubectl apply -f manifests/service.yaml --kubeconfig "$KUBECONFIG"
-kubectl apply -f manifests/frontend-deployment.yaml --kubeconfig "$KUBECONFIG"
-kubectl apply -f manifests/frontend-service.yaml --kubeconfig "$KUBECONFIG"
-kubectl apply -f manifests/loadbalancer.yaml --kubeconfig "$KUBECONFIG"
-kubectl apply -f manifests/hpa.yaml --kubeconfig "$KUBECONFIG"
-kubectl apply -f manifests/ingress.yaml --kubeconfig "$KUBECONFIG"
+# List of manifests to apply
+manifests=(
+  manifests/statefulset.yaml
+  manifests/volume.yaml
+  manifests/rabbitmq.yaml
+  manifests/secret.yaml
+  manifests/deployment.yaml
+  manifests/service.yaml
+  manifests/frontend-deployment.yaml
+  manifests/frontend-service.yaml
+  manifests/loadbalancer.yaml
+  manifests/hpa.yaml
+  manifests/ingress.yaml
+)
 
+# Apply manifests
+for manifest in "${manifests[@]}"; do
+  echo "Applying $manifest..."
+  kubectl apply -f "$manifest" --kubeconfig "$KUBECONFIG"
+  if [[ $? -ne 0 ]]; then
+    echo "Error applying $manifest. Exiting."
+    exit 1
+  fi
+done
 
-if [[ $? -ne 0 ]]; then
-  echo "Error applying manifests. Exiting."
-  exit 1
-fi
+echo "All manifests applied successfully."
 
-echo "Manifests applied successfully."

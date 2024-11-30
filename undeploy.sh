@@ -2,23 +2,37 @@
 
 KUBECONFIG=/mnt/c/Users/mazip/Downloads/k8s-inf326-kubeconfig.yaml
 
-# Eliminar los recursos en orden inverso
-kubectl delete -f manifests/statefulset.yaml --kubeconfig "$KUBECONFIG"
-kubectl delete -f manifests/volume.yaml --kubeconfig "$KUBECONFIG"
-kubectl delete -f manifests/rabbitmq.yaml --kubeconfig "$KUBECONFIG"
-kubectl delete -f manifests/secret.yaml --kubeconfig "$KUBECONFIG"
-kubectl delete -f manifests/deployment.yaml --kubeconfig "$KUBECONFIG"
-kubectl delete -f manifests/service.yaml --kubeconfig "$KUBECONFIG"
-kubectl delete -f manifests/loadbalancer.yaml --kubeconfig "$KUBECONFIG"
-kubectl delete -f manifests/hpa.yaml --kubeconfig "$KUBECONFIG"
-kubectl delete -f manifests/ingress.yaml --kubeconfig "$KUBECONFIG"
-kubectl delete -f manifests/frontend-deployment.yaml --kubeconfig "$KUBECONFIG"
-kubectl delete -f manifests/frontend-service.yaml --kubeconfig "$KUBECONFIG"
+# Function to delete resources
+delete_resource() {
+  local resource_file=$1
+  echo "Deleting $resource_file..."
+  kubectl delete -f "$resource_file" --ignore-not-found --grace-period=0 --force --kubeconfig "$KUBECONFIG"
+  if [[ $? -ne 0 ]]; then
+    echo "Error deleting $resource_file. Some resources may not have been removed."
+  else
+    echo "$resource_file deleted successfully."
+  fi
+}
 
-# Verificar si hubo errores
-if [[ $? -ne 0 ]]; then
-  echo "Error deleting manifests. Some resources may not have been removed. Exiting."
-  exit 1
-fi
+# Resources to delete in reverse order
+resources=(
+  manifests/ingress.yaml
+  manifests/hpa.yaml
+  manifests/loadbalancer.yaml
+  manifests/frontend-service.yaml
+  manifests/frontend-deployment.yaml
+  manifests/service.yaml
+  manifests/deployment.yaml
+  manifests/secret.yaml
+  manifests/rabbitmq.yaml
+  manifests/volume.yaml
+  manifests/statefulset.yaml
+)
 
-echo "Manifests deleted successfully."
+for resource in "${resources[@]}"; do
+  delete_resource "$resource"
+done
+
+echo "Undeploy completed."
+
+

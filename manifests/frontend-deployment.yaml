@@ -15,7 +15,7 @@ spec:
         app: frontend
     spec:
       containers:
-      - name: frontend-users-container
-        image: frontend:latest
-        ports:
-        - containerPort: 3000
+        - name: frontend-users-container
+          image: ttl.sh/frontend-users-img:8h
+          ports:
+            - containerPort: 3000

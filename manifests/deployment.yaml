@@ -13,11 +13,11 @@ spec:
         app: users-app
     spec:
       containers:
-      - name: users-container
-        image: ttl.sh/users-img:8h
-        imagePullPolicy: "Always"
-        ports:
-        - containerPort: 5000
-        envFrom:
-          - secretRef:
-              name: users-secrets
+        - name: users-container
+          image: ttl.sh/backend-users-img:8h
+          imagePullPolicy: "Always"
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - secretRef:
+                name: users-secrets
